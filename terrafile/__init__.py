@@ -101,7 +101,6 @@ def update_modules(path):
         target = os.path.join(module_path, name)
         source = repository_details['source']
 
-
         # Support modules on the local filesystem.
         if source.startswith('./') or source.startswith('../') or source.startswith('/'):
             print('Copying {}/{}'.format(module_path_name, name))
@@ -122,8 +121,8 @@ def update_modules(path):
         if has_git_tag(path=target, tag=version):
             print('Fetched {}/{}'.format(module_path_name, name))
             continue
-        # add token to tthe source url if exists
 
+        # add token to tthe source url if exists
         if 'GITHUB_TOKEN' in os.environ:
             source = add_github_token(source, os.getenv('GITHUB_TOKEN'))
         # Delete the old directory and clone it from scratch.
