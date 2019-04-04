@@ -32,6 +32,16 @@ def get_source_from_registry(source, version):
     sys.exit(1)
 
 
+def add_github_token(github_download_url,token):
+    github_repo_url_pattern = re.compile('.*github.com/(.*)/(.*)\.git')
+    match = github_repo_url_pattern.match(github_download_url)
+    url = github_download_url
+    if match:
+        user, repo = match.groups()
+        url = 'https://{}@github.com/{}/{}.git'.format(token, user, repo)
+    return url
+
+
 def run(*args, **kwargs):
     proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kwargs)
     stdout, stderr = proc.communicate()
@@ -48,7 +58,7 @@ def get_terrafile_path(path):
 def read_terrafile(path):
     try:
         with open(path) as open_file:
-            terrafile = yaml.load(open_file)
+            terrafile = yaml.load(open_file, Loader=yaml.FullLoader)
         if not terrafile:
             raise ValueError('{} is empty'.format(path))
     except IOError as error:
@@ -91,6 +101,7 @@ def update_modules(path):
         target = os.path.join(module_path, name)
         source = repository_details['source']
 
+
         # Support modules on the local filesystem.
         if source.startswith('./') or source.startswith('../') or source.startswith('/'):
             print('Copying {}/{}'.format(module_path_name, name))
@@ -111,7 +122,10 @@ def update_modules(path):
         if has_git_tag(path=target, tag=version):
             print('Fetched {}/{}'.format(module_path_name, name))
             continue
+        # add token to tthe source url if exists
 
+        if 'GITHUB_TOKEN' in os.environ:
+            source = add_github_token(source, os.getenv('GITHUB_TOKEN'))
         # Delete the old directory and clone it from scratch.
         print('Fetching {}/{}'.format(module_path_name, name))
         shutil.rmtree(target, ignore_errors=True)
